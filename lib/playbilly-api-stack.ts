@@ -24,6 +24,7 @@ export class PlaybillyApiStack extends cdk.Stack {
     const { stage, assetsBucket, matchReadyTopic, waitlistTopic } = props;
 
     const supabaseUrl = ssm.StringParameter.valueForStringParameter(this, `/playbilly/${stage}/supabase-url`);
+    const supabaseAnonKey = ssm.StringParameter.valueForStringParameter(this, `/playbilly/${stage}/supabase-anon-key`);
     const supabaseServiceKey = ssm.StringParameter.valueForStringParameter(this, `/playbilly/${stage}/supabase-service-key`);
 
     const apiFunction = new lambda.Function(this, "ApiFunction", {
@@ -43,7 +44,8 @@ export class PlaybillyApiStack extends cdk.Stack {
       environment: {
         STAGE: stage,
         SUPABASE_URL: supabaseUrl,
-        SUPABASE_SERVICE_KEY: supabaseServiceKey,
+        SUPABASE_ANON_KEY: supabaseAnonKey,
+        SUPABASE_SERVICE_ROLE_KEY: supabaseServiceKey,
         ASSETS_BUCKET_NAME: assetsBucket.bucketName,
         MATCH_READY_TOPIC_ARN: matchReadyTopic.topicArn,
         WAITLIST_TOPIC_ARN: waitlistTopic.topicArn,
