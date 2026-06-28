@@ -31,11 +31,11 @@ export class PlaybillyApiStack extends cdk.Stack {
       runtime: lambda.Runtime.PYTHON_3_12,
       architecture: lambda.Architecture.ARM_64,
       handler: "main.handler",
-      code: lambda.Code.fromAsset(path.join(__dirname, "../../backend"), {
+      code: lambda.Code.fromAsset(path.join(__dirname, "../../playbilly-backend"), {
         bundling: {
           image: lambda.Runtime.PYTHON_3_12.bundlingImage,
-          // requirements.txt is generated from pyproject.toml via: uv export --frozen --no-hashes --no-dev -o requirements.txt
-          command: ["bash", "-c", "pip install --no-cache-dir -r requirements.txt -t /asset-output && cp -r . /asset-output && rm -rf /asset-output/tests /asset-output/.venv /asset-output/pyproject.toml /asset-output/.python-version"],
+          // requirements.txt is generated from pyproject.toml via: uv export --no-hashes --no-dev -o requirements.txt
+          command: ["bash", "-c", "pip install --no-cache-dir -r requirements.txt -t /asset-output && cp -r app main.py /asset-output/"],
         },
       }),
       memorySize: stage === "prod" ? 512 : 256,
@@ -51,7 +51,9 @@ export class PlaybillyApiStack extends cdk.Stack {
           ? "notifications@playbilly.app"
           : ssm.StringParameter.valueForStringParameter(this, `/playbilly/${stage}/ses-dev-sender`),
       },
-      logRetention: stage === "prod" ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.TWO_WEEKS,
+      logGroup: new logs.LogGroup(this, "ApiLogGroup", {
+        retention: stage === "prod" ? logs.RetentionDays.ONE_MONTH : logs.RetentionDays.TWO_WEEKS,
+      }),
     });
 
     matchReadyTopic.grantPublish(apiFunction);
@@ -66,7 +68,7 @@ export class PlaybillyApiStack extends cdk.Stack {
     const httpApi = new apigw.HttpApi(this, "HttpApi", {
       apiName: `playbilly-api-${stage}`,
       corsPreflight: {
-        allowOrigins: stage === "prod" ? ["https://playbilly.app"] : ["http://localhost:5173", "https://*.vercel.app"],
+        allowOrigins: stage === "prod" ? ["https://playbilly.app", "https://playbilly.vercel.app"] : ["*"],
         allowMethods: [apigw.CorsHttpMethod.GET, apigw.CorsHttpMethod.POST, apigw.CorsHttpMethod.PATCH, apigw.CorsHttpMethod.DELETE, apigw.CorsHttpMethod.OPTIONS],
         allowHeaders: ["Content-Type", "Authorization"],
         maxAge: cdk.Duration.hours(1),
