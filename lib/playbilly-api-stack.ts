@@ -26,6 +26,7 @@ export class PlaybillyApiStack extends cdk.Stack {
     const supabaseUrl = ssm.StringParameter.valueForStringParameter(this, `/playbilly/${stage}/supabase-url`);
     const supabaseAnonKey = ssm.StringParameter.valueForStringParameter(this, `/playbilly/${stage}/supabase-anon-key`);
     const supabaseServiceKey = ssm.StringParameter.valueForStringParameter(this, `/playbilly/${stage}/supabase-service-key`);
+    const devBypassEnabled = ssm.StringParameter.valueForStringParameter(this, `/playbilly/${stage}/dev-bypass-enabled`);
 
     const apiFunction = new lambda.Function(this, "ApiFunction", {
       functionName: `playbilly-api-${stage}`,
@@ -46,6 +47,7 @@ export class PlaybillyApiStack extends cdk.Stack {
         SUPABASE_URL: supabaseUrl,
         SUPABASE_ANON_KEY: supabaseAnonKey,
         SUPABASE_SERVICE_ROLE_KEY: supabaseServiceKey,
+        DEV_BYPASS_ENABLED: devBypassEnabled,
         ASSETS_BUCKET_NAME: assetsBucket.bucketName,
         MATCH_READY_TOPIC_ARN: matchReadyTopic.topicArn,
         WAITLIST_TOPIC_ARN: waitlistTopic.topicArn,
