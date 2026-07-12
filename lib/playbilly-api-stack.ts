@@ -37,7 +37,25 @@ export class PlaybillyApiStack extends cdk.Stack {
         bundling: {
           image: lambda.Runtime.PYTHON_3_12.bundlingImage,
           // requirements.txt is generated from pyproject.toml via: uv export --no-hashes --no-dev -o requirements.txt
-          command: ["bash", "-c", "pip install --no-cache-dir -r requirements.txt -t /asset-output && cp -r app main.py /asset-output/"],
+          //
+          // Pin pip to ARM64 (aarch64) manylinux wheels so bundling is host-independent.
+          // Without this, a deploy from an x86_64 CI runner (no QEMU) pulls the amd64
+          // build image and installs x86_64 wheels for compiled deps (pydantic-core,
+          // cryptography, asyncpg, pillow) — which then fail to import in the ARM64 Lambda
+          // ("No module named 'pydantic_core._pydantic_core'"). Multiple --platform tags
+          // cover deps that only ship manylinux_2_28 (cryptography 49, pillow 12).
+          command: [
+            "bash",
+            "-c",
+            [
+              "pip install --no-cache-dir -r requirements.txt -t /asset-output",
+              "--platform manylinux2014_aarch64",
+              "--platform manylinux_2_17_aarch64",
+              "--platform manylinux_2_28_aarch64",
+              "--python-version 3.12 --implementation cp --only-binary=:all:",
+              "&& cp -r app main.py /asset-output/",
+            ].join(" "),
+          ],
         },
       }),
       memorySize: stage === "prod" ? 512 : 256,
