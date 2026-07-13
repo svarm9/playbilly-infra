@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      # `yarn build` is `tsc`, which type-checks the CDK app (cdk synth relies on
+      # this compiling).
+      - name: Build (type-check)
+        run: yarn build
+
+      - name: Test (CDK snapshot tests)
+        run: yarn test
+
+  qlty:
+    name: Qlty (advisory)
+    # Advisory: its own job, intentionally NOT wired as a required status check in
+    # branch protection (same posture as the Playwright job). Surfaces formatting,
+    # duplication, secrets, dependency (trivy) and IaC-misconfig (checkov) findings.
+    # No coverage step — the jest snapshot tests don't emit lcov. Promote to a
+    # required check once thresholds are tuned.
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # qlty needs history for PR diffing
+
+      - uses: qltysh/qlty-action/install@main
+
+      - name: Qlty check
+        continue-on-error: true
+        run: qlty check --all

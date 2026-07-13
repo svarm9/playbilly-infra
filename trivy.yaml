@@ -1,0 +1,9 @@
+# Trivy config, auto-loaded from the repo root (PB-31). Qlty runs
+# `trivy fs . --scanners secret`, which otherwise walks the CDK synth output —
+# a multi-GB build artifact (bundled Lambda + vendored Python deps). Skip it and
+# node_modules so secret scanning stays fast and only covers our source.
+scan:
+  skip-dirs:
+    - cdk.out
+    - "**/cdk.out"
+    - node_modules

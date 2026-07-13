@@ -1,0 +1,14 @@
+# PB-31: starter Semgrep ruleset for the CDK (TypeScript) infra. Qlty invokes
+# semgrep with `--config .semgrep.yaml`, so this file must exist. Advisory-first
+# — grow during threshold tuning (trivy + checkov cover most IaC concerns).
+rules:
+  - id: no-eval
+    pattern: eval(...)
+    message: "Avoid eval() — it executes arbitrary code."
+    languages: [javascript, typescript]
+    severity: ERROR
+  - id: no-hardcoded-account-id
+    pattern: 'env: { account: "..." }'
+    message: "Avoid hard-coded AWS account IDs — use CDK environment tokens."
+    languages: [typescript]
+    severity: WARNING
