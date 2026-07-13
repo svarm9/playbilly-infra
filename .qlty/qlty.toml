@@ -83,8 +83,15 @@ name = "gitleaks"
 [[plugin]]
 name = "trufflehog"
 
+# trivy + checkov download vulnerability/policy DBs and are slow, so they are
+# CI-only: `triggers` omits pre-commit/pre-push, keeping them out of the git
+# hooks. They still run in CI (the advisory `qlty` job runs `qlty check`, the
+# `manual` trigger). The pre-push hook then runs only the fast plugins
+# (semgrep, gitleaks, trufflehog).
 [[plugin]]
 name = "trivy"
+triggers = ["manual", "build", "agent"]
 
 [[plugin]]
 name = "checkov"
+triggers = ["manual", "build", "agent"]
