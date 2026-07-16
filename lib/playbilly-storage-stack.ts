@@ -1,4 +1,5 @@
 import * as cdk from "aws-cdk-lib";
+import * as iam from "aws-cdk-lib/aws-iam";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import { Construct } from "constructs";
 
@@ -30,6 +31,15 @@ export class PlaybillyStorageStack extends cdk.Stack {
       removalPolicy: isProd ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: !isProd,
     });
+
+    // Public read scoped to the avatars/ prefix only. Avatars are re-fetched
+    // constantly, so stable cacheable URLs beat presigned GETs. The bucket
+    // allows a public policy (blockPublicPolicy/restrictPublicBuckets false).
+    this.assetsBucket.addToResourcePolicy(new iam.PolicyStatement({
+      actions: ["s3:GetObject"],
+      resources: [this.assetsBucket.arnForObjects("avatars/*")],
+      principals: [new iam.AnyPrincipal()],
+    }));
 
     this.exportsBucket = new s3.Bucket(this, "ExportsBucket", {
       bucketName: `playbilly-dupr-exports-${stage}`,
