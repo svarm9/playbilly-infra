@@ -29,6 +29,15 @@ jobs:
       - name: Build (type-check)
         run: yarn build
 
+      # The ApiStack synth test points lambda.Code.fromAsset at the sibling
+      # ../playbilly-backend dir. Asset bundling is disabled in the test, so
+      # staging only needs the directory to exist (its contents are irrelevant
+      # to the env-var assertions). CI checks out infra only, so stub it.
+      - name: Stub backend asset for CDK synth
+        run: |
+          mkdir -p ../playbilly-backend
+          printf 'def handler(event, context):\n    return {}\n' > ../playbilly-backend/main.py
+
       - name: Test (CDK snapshot tests)
         run: yarn test
 
