@@ -66,10 +66,14 @@ export class PlaybillyApiStack extends cdk.Stack {
         SUPABASE_ANON_KEY: supabaseAnonKey,
         SUPABASE_SERVICE_ROLE_KEY: supabaseServiceKey,
         DEV_BYPASS_ENABLED: devBypassEnabled,
-        ASSETS_BUCKET_NAME: assetsBucket.bucketName,
+        // Env keys must match playbilly-backend/app/core/config.py exactly
+        // (ASSETS_BUCKET, ASSETS_BASE_URL, SES_SENDER). AWS_REGION is set by
+        // Lambda automatically, so it is intentionally not declared here.
+        ASSETS_BUCKET: assetsBucket.bucketName,
+        ASSETS_BASE_URL: `https://${assetsBucket.bucketName}.s3.${this.region}.amazonaws.com`,
         MATCH_READY_TOPIC_ARN: matchReadyTopic.topicArn,
         WAITLIST_TOPIC_ARN: waitlistTopic.topicArn,
-        SES_FROM_ADDRESS: stage === "prod"
+        SES_SENDER: stage === "prod"
           ? "notifications@playbilly.app"
           : ssm.StringParameter.valueForStringParameter(this, `/playbilly/${stage}/ses-dev-sender`),
       },
