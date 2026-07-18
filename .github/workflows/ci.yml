@@ -29,14 +29,18 @@ jobs:
       - name: Build (type-check)
         run: yarn build
 
-      # The ApiStack synth test points lambda.Code.fromAsset at the sibling
-      # ../playbilly-backend dir. Asset bundling is disabled in the test, so
-      # staging only needs the directory to exist (its contents are irrelevant
-      # to the env-var assertions). CI checks out infra only, so stub it.
-      - name: Stub backend asset for CDK synth
+      # The ApiStack uses NodejsFunction pointed at the sibling backend's
+      # src/lambda.ts. esbuild bundling is disabled in the test (via the
+      # aws:cdk:bundling-stacks:[] context), but the NodejsFunction constructor
+      # still validates that the entry file and the deps lockfile exist. CI
+      # checks out infra only, so stub the minimum the constructor requires
+      # (contents are irrelevant to the env-var assertions).
+      - name: Stub backend entry for NodejsFunction
         run: |
-          mkdir -p ../playbilly-backend
-          printf 'def handler(event, context):\n    return {}\n' > ../playbilly-backend/main.py
+          mkdir -p ../playbilly-backend/src
+          echo 'export const handler = async () => ({});' > ../playbilly-backend/src/lambda.ts
+          echo '{"name":"playbilly-backend","version":"0.1.0"}' > ../playbilly-backend/package.json
+          echo '{"name":"playbilly-backend","version":"0.1.0","lockfileVersion":3,"requires":true,"packages":{}}' > ../playbilly-backend/package-lock.json
 
       - name: Test (CDK snapshot tests)
         run: yarn test
