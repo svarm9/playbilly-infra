@@ -72,7 +72,7 @@ export class PlaybillyApiStack extends cdk.Stack {
         SUPABASE_ANON_KEY: supabaseAnonKey,
         SUPABASE_SERVICE_ROLE_KEY: supabaseServiceKey,
         DEV_BYPASS_ENABLED: devBypassEnabled,
-        // Env keys must match playbilly-backend/app/core/config.py exactly
+        // Env keys must match playbilly-backend/src/config.ts exactly
         // (ASSETS_BUCKET, ASSETS_BASE_URL, SES_SENDER). AWS_REGION is set by
         // Lambda automatically, so it is intentionally not declared here.
         ASSETS_BUCKET: assetsBucket.bucketName,
