@@ -109,9 +109,20 @@ export class PlaybillyApiStack extends cdk.Stack {
     const httpApi = new apigw.HttpApi(this, "HttpApi", {
       apiName: `playbilly-api-${stage}`,
       corsPreflight: {
+        // API Gateway answers preflights itself, so THIS list — not the
+        // backend's own allowlist — is what a browser sees (PB-114).
+        // Prod is explicit: apex and www are distinct origins to a browser, so
+        // both are named. staging.playbilly.app is deliberately absent — the
+        // staging frontend points at the dev API and has no business reaching
+        // production data. Dev stays "*" so Vercel preview deploys, whose URLs
+        // are generated per branch, keep working.
         allowOrigins:
           stage === "prod"
-            ? ["https://playbilly.app", "https://playbilly.vercel.app"]
+            ? [
+                "https://playbilly.app",
+                "https://www.playbilly.app",
+                "https://playbilly.vercel.app",
+              ]
             : ["*"],
         allowMethods: [
           apigw.CorsHttpMethod.GET,
